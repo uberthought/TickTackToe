@@ -10,10 +10,11 @@ from random import randint
 class DNN:
     def __init__(self, state_size, action_size):
         self.input_layer = tf.placeholder(tf.float32, shape=(None, state_size))
-        self.hidden = tf.layers.dense(inputs=self.input_layer, units=state_size, activation=tf.nn.tanh)
-        self.keep_prob = tf.placeholder_with_default(1.0, [])
-        self.dropout = tf.nn.dropout(self.hidden, self.keep_prob)
-        self.prediction = tf.layers.dense(inputs=self.dropout, units=action_size, activation=tf.nn.tanh)
+        self.hidden1 = tf.layers.dense(inputs=self.input_layer, units=state_size * 2, activation=tf.nn.tanh)
+        self.hidden2 = tf.layers.dense(inputs=self.hidden1, units=state_size, activation=tf.nn.tanh)
+        # self.keep_prob = tf.placeholder_with_default(1.0, [])
+        # self.dropout = tf.nn.dropout(self.hidden, self.keep_prob)
+        self.prediction = tf.layers.dense(inputs=self.hidden2, units=action_size, activation=tf.nn.tanh)
 
         self.expected = tf.placeholder(tf.float32, shape=(None, action_size))
 
@@ -31,8 +32,8 @@ class DNN:
 
     def train(self, X, Y):
             loss = 1
-            while loss >= 0.05:
-                loss, _ = self.sess.run([self.train_loss, self.train_step], feed_dict={self.input_layer: X, self.expected: Y, self.keep_prob: 0.9})
+            while loss >= 0.1:
+                loss, _ = self.sess.run([self.train_loss, self.train_step], feed_dict={self.input_layer: X, self.expected: Y})
 
     def run(self, X):
         return self.sess.run(self.prediction, feed_dict={self.input_layer: X})

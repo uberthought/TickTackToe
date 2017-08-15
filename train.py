@@ -4,189 +4,91 @@ import os.path
 import math
 
 from Game import Game
+from network import DNN
 from random import randint
 
 game = Game()
-# game.move(0, 0, -1)
-# game.move(0, 2, 1)
-# game.move(0, 1, -1)
-# game.move(1, 1, 1)
-# game.move(1, 0, -1)
-# game.move(2, 2, 1)
-# game.move(1, 2, -1)
+dnn = DNN(game.state_size, game.action_size)
 
+X = np.array([], dtype=np.float).reshape(0, game.state_size)
+Y = np.array([], dtype=np.float).reshape(0, game.action_size)
 
-input_layer = tf.placeholder(tf.float32, shape=(None, 9), name='input')
-hidden = tf.layers.dense(inputs=input_layer, units=9, activation=tf.nn.tanh, name='hidden')
-prediction = tf.layers.dense(inputs=hidden, units=9, activation=tf.nn.tanh, name='prediction')
-expected = tf.placeholder(tf.float32, shape=(None, 9), name='expected')
+# X1 = np.array([], dtype=np.float).reshape(0, game.state_size)
+# Y1 = np.array([], dtype=np.float).reshape(0, game.action_size)
 
-train_loss = tf.reduce_mean(tf.losses.mean_squared_error(expected, prediction))
-train_step = tf.train.AdagradOptimizer(0.5).minimize(train_loss)
+experiences = []
 
-sess = tf.Session()
-init = tf.global_variables_initializer()
-sess.run(init)
-
-saver = tf.train.Saver()
-if os.path.exists('train/train.ckpt.meta'):
-    print('loading from train/train.ckpt')
-    saver.restore(sess, "train/train.ckpt")
-
-
-def train(X, Y):
-    feed_dict={input_layer: X, expected: Y}
-
-    loss = 1
-    while loss > 0.1:
-        loss, _= sess.run([train_loss, train_step], feed_dict=feed_dict)
-        # print(loss)
-
-    # feed_dict={input_layer: X, expected: Y}
-    # prediction_output, expected_output= sess.run([prediction, expected], feed_dict=feed_dict)
-    #
-    # print(prediction_output)
-    # print(expected_output)
-
-# X = game.get_state()
-# Y = np.abs(np.copy(X)) * -1
-# Y[0][1] = 1
-
-# for i in range(1000):
-#     loss, _ = sess.run([train_loss, train_step], feed_dict={input_layer: X, expected: Y})
-    #     print(loss)
-#
-# prediction_output, expected_output= sess.run([prediction, expected], feed_dict={input_layer: X, expected: Y})
-# a = np.argmax(prediction_output)
-#
-# print(prediction_output)
-# print(expected_output)
-# print(a)
-#
-# print(game.state)
-# game.move(int(a % 3), int(a / 3), 1)
-# print(game.state)
-#
-# exit()
-
-X = np.zeros((1, 9))
-Y = np.zeros((1, 9))
-
-illegal_moves_made = 0
 won = 0
-lost = 0
 games = 1
 
 # For life or until learning is stopped...
-for i in range(10):
+for i in range(10000000):
 
-    # print(game.state)
+    state1 = game.get_state()
+    actions1 = dnn.run([state1])
 
-    # Choose an action (aa) in the current world state (ss) based on current Q-value estimates (Q(s,⋅)Q(s,⋅)).
-    ss = game.get_state()
-    a = sess.run(prediction, feed_dict={input_layer: ss})
+    # move_mask = game.move_mask()
+    # actions1 = actions1 + move_mask
+    action = np.argmax(actions1)
 
     if randint(0,9) == 0:
-        a = np.random.rand(1,9) + -0.5
-    mask = np.where(ss != 0, -2, 0)
-    aa = np.argmax(a + mask)
+        moves = game.moves()
+        action = np.random.choice(moves, 1)
 
     # Take the action (aa) and observe the the outcome state (s′s′) and reward (rr).
-    game.move(int(aa / 3), int(aa % 3), 1)
-    rr = game.get_score()
-
-    # print()
-    # print('State')
-    # print(game.get_state())
-    # print('a')
-    # print(a)
-    # print('rr ', rr)
-
-    # store result
-    # a[0][aa] = rr + 0.1 * a[0][aa]
-    a[0][aa] = rr
-
-    X = np.concatenate((X, ss), axis=0)
-    Y = np.concatenate((Y, a), axis=0)
-    if len(X) > 1000:
-        X = X[-1000:, ]
-        Y = Y[-1000:, ]
+    game.move(action, 1)
+    score = game.get_score()
 
     # play other player
-    if math.fabs(rr) != 1:
-        foo = game.get_state()
-        foo = np.where(foo == 0)[1]
-        if len(foo) > 0:
-            foo = np.random.choice(foo, 1)[0]
-            # print('Random move: ', foo)
-            game.move(int(foo / 3), int(foo % 3), -1)
+    if score != -1 and score != 1:
+        moves = game.moves()
+        if len(moves) > 0:
+            game.move(np.random.choice(moves, 1), -1)
+            score = game.get_score()
 
-    foo = game.get_state()
-    foo = np.where(foo == 0)[1]
+    state2 = game.get_state()
+    actions2 = dnn.run([state2])
 
-    if math.fabs(rr) >= 1 or len(foo) == 0:
+    # store experience as state1, action, score, state2
+    experience = {'state1': state1, 'action': action, 'score': score, 'state2': state2}
+    experiences.append(experience)
+
+    if score == -1 or score == 1 or game.illegal_move:
         games = games + 1
-        if game.illegal_move:
-            illegal_moves_made = illegal_moves_made + 1
-        if game.get_score() == 1:
-            won = won + 1
-        if game.get_score() == -1:
-            lost = lost + 1
-        print(won / games * 100, lost / games * 100, illegal_moves_made / games * 100)
 
-        train(X, Y)
+        # switch to next game
 
-        # X = np.zeros((1, 9))
-        # Y = np.zeros((1, 9))
         game = Game()
 
-    if i % 1000 == 0:
-        saver.save(sess, "train/train.ckpt")
+        # train
 
-illegal_moves_made = 0
-won = 0
-lost = 0
-games = 1
+        training_experiences = np.random.choice(experiences, 100)
 
-game = Game()
+        X = np.array([], dtype=np.float).reshape(0,9)
+        Y = np.array([], dtype=np.float).reshape(0,9)
 
-for i in range(10000):
-    ss = game.get_state()
-    a = sess.run(prediction, feed_dict={input_layer: ss})
-    aa = np.argmax(a)
+        for experience in training_experiences:
+            state1 = experience['state1']
+            action = experience['action']
+            score = experience['score']
+            state2 = experience['state2']
 
-    mask = np.where(ss != 0, -2, 0)
-    aa = np.argmax(a + mask)
+            actions1 = dnn.run([state1])
 
-    game.move(int(aa / 3), int(aa % 3), 1)
-    rr = game.get_score()
+            if score == -1 or score == 1:
+                actions1[0][action] = score
+            else:
+                actions2 = dnn.run([state2])
+                discount = 0.9
+                actions1[0][action] = score + discount * np.max(actions2)
 
-    # play other player
-    if math.fabs(rr) != 1:
-        foo = game.get_state()
-        foo = np.where(foo == 0)[1]
-        if len(foo) > 0:
-            foo = np.random.choice(foo, 1)[0]
-            game.move(int(foo / 3), int(foo % 3), -1)
+            actions1 = np.clip(actions1, -1, 1)
 
-    foo = game.get_state()
-    foo = np.where(foo == 0)[1]
+            X = np.concatenate((X, np.reshape(state1, (1, game.state_size))), axis=0)
+            Y = np.concatenate((Y, actions1), axis=0)
 
-    if math.fabs(rr) >= 1 or len(foo) == 0:
-        games = games + 1
-        if game.illegal_move:
-            illegal_moves_made = illegal_moves_made + 1
-        if game.get_score() == 1:
-            won = won + 1
-        if game.get_score() == -1:
-            lost = lost + 1
-        print(won / games * 100, lost / games * 100, illegal_moves_made / games * 100)
-        game = Game()
+        dnn.train(X, Y)
 
-
-        # Initialize Q-values (Q(s,a)Q(s,a)) arbitrarily for all state-action pairs.
-# For life or until learning is stopped...
-    # Choose an action (aa) in the current world state (ss) based on current Q-value estimates (Q(s,⋅)Q(s,⋅)).
-    # Take the action (aa) and observe the the outcome state (s′s′) and reward (rr).
-    # Update Q(s,a):=Q(s,a)+α[r+γmaxa′Q(s′,a′)−Q(s,a)]Q(s,a):=Q(s,a)+α[r+γmaxa′Q(s′,a′)−Q(s,a)]
-
+    if i % 100 == 0:
+        dnn.save()
+        print(games)
