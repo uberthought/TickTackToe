@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os.path
 import math
+import pickle
 
 from Game import Game
 from network import DNN
@@ -11,6 +12,8 @@ game = Game()
 dnn = DNN(game.state_size, game.action_size)
 
 experiences = []
+if os.path.exists('experiences.p'):
+    experiences = pickle.load(open("experiences.p", "rb"))
 
 won = 0
 games = 1
@@ -57,6 +60,8 @@ for i in range(10000000):
         game = Game()
 
         # train
+
+        pickle.dump(experiences, open("experiences.p", "wb"))
 
         training_experiences = np.random.choice(experiences, 100)
 
