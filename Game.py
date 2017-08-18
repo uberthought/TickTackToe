@@ -22,7 +22,7 @@ class Game:
             return 0
 
         if self.tied():
-            return 100
+            return 0
 
         foo = np.reshape(self.state, (3, 3))
         rows = np.sum(foo, axis=0)

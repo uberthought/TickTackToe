@@ -14,12 +14,21 @@ def lrelu(x):
 
 class DNN:
     def __init__(self, state_size, action_size):
+        self.keep_prob = tf.placeholder_with_default(1.0, [])
+        self.stddev = tf.placeholder_with_default(0.0, [])
+
         self.input_layer = tf.placeholder(tf.float32, shape=(None, state_size))
-        self.hidden1 = tf.layers.dense(inputs=self.input_layer, units=state_size, activation=lrelu)
-        # self.hidden2 = tf.layers.dense(inputs=self.hidden1, units=state_size * 2, activation=lrelu)
-        # self.keep_prob = tf.placeholder_with_default(1.0, [])
-        # self.dropout = tf.nn.dropout(self.hidden, self.keep_prob)
-        self.prediction = tf.layers.dense(inputs=self.hidden1, units=action_size)
+
+        noise_generator = tf.random_normal(shape=tf.shape(self.input_layer), mean=0.0, stddev=self.stddev, dtype=tf.float32)
+        self.noise1 = tf.add(self.input_layer, noise_generator)
+
+        self.hidden1 = tf.layers.dense(inputs=self.noise1, units=state_size, activation=lrelu)
+        self.dropout1 = tf.nn.dropout(self.hidden1, self.keep_prob)
+
+        self.hidden2 = tf.layers.dense(inputs=self.hidden1, units=state_size * 2, activation=lrelu)
+        self.dropout2 = tf.nn.dropout(self.hidden2, self.keep_prob)
+
+        self.prediction = tf.layers.dense(inputs=self.dropout2, units=action_size)
 
         self.expected = tf.placeholder(tf.float32, shape=(None, action_size))
 
@@ -37,11 +46,11 @@ class DNN:
             self.saver.restore(self.sess, "train/train.ckpt")
 
     def train(self, X, Y):
-        feed_dict = {self.input_layer: X, self.expected: Y}
+        feed_dict = {self.input_layer: X, self.expected: Y, self.keep_prob: 0.9, self.stddev: 0.1}
         # loss = self.sess.run(self.train_loss, feed_dict=feed_dict)
         loss = 100
         i = 0
-        while i < 1000 and loss > 1:
+        while i < 1000 and loss > 25:
             i += 1
             loss, _ = self.sess.run([self.train_loss, self.train_step], feed_dict=feed_dict)
             # if i != 0 and i % 100 == 0:

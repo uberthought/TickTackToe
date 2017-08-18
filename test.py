@@ -37,9 +37,9 @@ for i in range(5000):
         games = games + 1
         if game.illegal():
             illegal = illegal + 1
-            print()
-            print(game.state)
-            print(actions1)
+            # print()
+            # print(game.state)
+            # print(actions1)
         elif game.tied():
             ties = ties + 1
         elif game.won():
