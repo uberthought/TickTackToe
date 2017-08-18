@@ -12,38 +12,44 @@ dnn = DNN(game.state_size, game.action_size)
 
 wins = 0
 ties = 0
+illegal = 0
+lost = 0
 games = 1
 
-for i in range(10000):
+for i in range(5000):
 
     state1 = game.get_state()
     actions1 = dnn.run([state1])
 
-    move_mask = game.move_mask()
-    action = np.argmax(actions1 + move_mask * 2)
+    action = np.argmax(actions1)
 
     # Take the action (aa) and observe the the outcome state (s′s′) and reward (rr).
     game.move(action, 1)
     score = game.get_score()
 
     # play other player
-    if score != -1 and score != 1:
+    if score != 0 and score != 100:
         moves = game.moves()
-        if len(moves) > 0:
-            game.move(np.random.choice(moves, 1), -1)
-            score = game.get_score()
+        game.move(np.random.choice(moves, 1), -1)
+        score = game.get_score()
 
-    if score == -1 or score == 1:
+    if score == 0 or score == 100:
         games = games + 1
-        if len(game.moves()) == 0:
+        if game.illegal():
+            illegal = illegal + 1
+            print()
+            print(game.state)
+            print(actions1)
+        elif game.tied():
             ties = ties + 1
-        elif score == 1:
+        elif game.won():
             wins = wins + 1
-        won = wins  / games * 100
-        lost = (games - (wins + ties)) / games * 100
-        tied = ties / games * 100
+        elif game.lost():
+            lost = lost + 1
+
         game = Game()
 
-print('Won: ', won)
-print('Lost: ', lost)
-print('Tied: ', tied)
+print('Won: ', wins / games * 100)
+print('Lost: ', lost / games * 100)
+print('Tied: ', ties / games * 100)
+print('Illegal: ', illegal / games * 100)
