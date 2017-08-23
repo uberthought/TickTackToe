@@ -11,19 +11,21 @@ class Game:
         self.state = np.zeros(9)
 
     def get_state(self):
-        # return np.copy(self.state)
         p1 = np.where(self.state == 1, 1, 0)
         p2 = np.where(self.state == -1, 1, 0)
         return np.concatenate((p1, p2))
 
     def get_score(self):
 
+        # player made illegal move
         if self.illegal():
             return 0
 
+        # tied
         if self.tied():
-            return 0
+            return 100
 
+        # score
         foo = np.reshape(self.state, (3, 3))
         rows = np.sum(foo, axis=0)
         columns = np.sum(foo, axis=1)
@@ -32,17 +34,17 @@ class Game:
         all = np.concatenate((rows, columns, [diagonal1], [diagonal2]))
 
         if all.max() == 3:
-            return 100
+            return 0
         elif all.min() == -3:
             return 0
 
-        return 10
+        return 1
 
-    def move(self, x, v):
+    def move(self, x, player):
         if self.state[x] != 0:
-            self.illegal_move = True
+            self.illegal_move = player
         else:
-            self.state[x] = v
+                self.state[x] = player
 
     def moves(self):
         return np.where(self.state == 0)[0]
@@ -57,10 +59,26 @@ class Game:
         return self.illegal_move
 
     def tied(self):
-        return len(self.moves()) == 0
+        return np.all(self.state != 0)
 
     def move_mask(x):
         p1 = x[:9]
         p2 = x[9:]
         foo = p1 + p2
         return np.where(foo != 0, 0, 1)
+
+    def is_finished(self):
+
+        # illegal move
+        if self.illegal():
+            return True
+
+        # tied
+        if self.tied():
+            return True
+
+        score = self.get_score()
+        if  score == 100 or score == 0:
+            return True
+
+        return False
