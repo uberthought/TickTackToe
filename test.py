@@ -34,7 +34,7 @@ def player_turn_random(player):
     game.move(action, player)
 
 
-for i in range(10000):
+for i in range(2000):
 
     # print(np.reshape(game.state, (3, 3)))
 

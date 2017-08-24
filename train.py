@@ -12,8 +12,9 @@ game = Game()
 dnn1 = DNN(game.state_size, game.action_size)
 
 experiences = []
-if os.path.exists('experiences.p'):
-    experiences = pickle.load(open("experiences.p", "rb"))
+old_experiences = []
+if os.path.exists('old_experiences.p'):
+    old_experiences = pickle.load(open("old_experiences.p", "rb"))
 
 
 def player_turn(dnn, player):
@@ -40,7 +41,6 @@ def player_turn_random(player):
 
 
 def train(dnn, experiences):
-
     # terminal_experiences = []
     # for experience in experiences:
     #     terminal = experience['terminal']
@@ -59,12 +59,10 @@ def train(dnn, experiences):
     #     for experience in np.take(terminal_experiences, indices, axis=0):
     #         training_experiences.append(experience)
 
-    training_experiences = np.random.choice(experiences, 500)
-
     X = np.array([], dtype=np.float).reshape(0, game.state_size)
     Y = np.array([], dtype=np.float).reshape(0, game.action_size)
 
-    for experience in training_experiences:
+    for experience in experiences:
         state0 = experience['state0']
         action = experience['action']
         state1 = experience['state1']
@@ -77,18 +75,30 @@ def train(dnn, experiences):
             actions1[0][action] = score
         else:
             actions2 = dnn.run([state1])
-            discount_factor = .5
+            discount_factor = 1
             actions1[0][action] = score + discount_factor * np.max(actions2)
-
-        # move_mask = Game.move_mask(state0)
-        # actions1 = actions1 * move_mask
 
         X = np.concatenate((X, np.reshape(state0, (1, game.state_size))), axis=0)
         Y = np.concatenate((Y, actions1), axis=0)
 
-    dnn.train(X, Y)
+    return dnn.train(X, Y)
 
-print('experiences ', len(experiences))
+
+def add_experience(experience):
+
+    index = len(old_experiences) - 1
+    for existing in reversed(old_experiences):
+        if (existing['state0'] == experience['state0']).all():
+            old_experiences.pop(index)
+        index -= 1
+    old_experiences.append(experience)
+
+    experiences.append(experience)
+
+
+print('old_experiences ', len(old_experiences))
+
+games = 0
 
 # For life or until learning is stopped...
 for i in range(10000000):
@@ -103,8 +113,8 @@ for i in range(10000000):
 
     if terminal:
         score1 = game.get_score()
-        experience1 = {'state0': state0, 'action': action1, 'state1': state1, 'score': score1, 'terminal': terminal}
-        experiences.append(experience1)
+        experience = {'state0': state0, 'action': action1, 'state1': state1, 'score': score1, 'terminal': terminal}
+        add_experience(experience)
     else:
         #player 2 move
         action2 = player_turn_random(-1)
@@ -115,18 +125,36 @@ for i in range(10000000):
 
         terminal = game.is_finished()
 
-        experience1 = {'state0': state0, 'action': action1, 'state1': state2, 'score': score1, 'terminal': terminal}
-        experiences.append(experience1)
+        experience = {'state0': state0, 'action': action1, 'state1': state2, 'score': score1, 'terminal': terminal}
+        add_experience(experience)
 
     if terminal:
+
         # switch to next game
 
+        games += 1
         game = Game()
 
-        # train
-        train(dnn1, experiences)
+        # add old experiences
 
-    if i != 0 and i % 100 == 0:
-        pickle.dump(experiences, open("experiences.p", "wb"))
-        print(i)
+        # p = np.random.exponential(size=len(experiences))
+        # p = p / p.sum()
+        # indices = np.random.choice(len(experiences), 5000, p=p)
+        # experiences = np.take(experiences, indices, axis=0).tolist()
+
+        # if len(old_experiences) >= 0:
+        #     random_old_experiences = np.random.choice(old_experiences, len(experiences) * 2).tolist()
+        #     experiences = experiences + random_old_experiences
+
+        # train
+        new_loss = train(dnn1, experiences)
+        old_loss = train(dnn1, old_experiences)
+
+        print('games ', games)
+        print('new_loss ', new_loss)
+        print('old_loss ', old_loss)
+
+        experiences = []
+
+        pickle.dump(old_experiences, open("old_experiences.p", "wb"))
         dnn1.save()

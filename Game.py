@@ -50,10 +50,23 @@ class Game:
         return np.where(self.state == 0)[0]
 
     def won(self):
-        return not self.illegal() and not self.tied() and self.get_score() == 100
+        if self.illegal() or self.tied():
+            return False
+
+        foo = np.reshape(self.state, (3, 3))
+        rows = np.sum(foo, axis=0)
+        columns = np.sum(foo, axis=1)
+        diagonal1 = foo[0][0] + foo[1][1] + foo[2][2]
+        diagonal2 = foo[0][2] + foo[1][1] + foo[2][0]
+        all = np.concatenate((rows, columns, [diagonal1], [diagonal2]))
+
+        if all.max() == 3:
+            return True
+
+        return False
 
     def lost(self):
-        return not self.illegal() and not self.tied() and self.get_score() == 0
+        return not self.illegal() and not self.tied() and not self.won()
 
     def illegal(self):
         return self.illegal_move
