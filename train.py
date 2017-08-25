@@ -41,24 +41,6 @@ def player_turn_random(player):
 
 
 def train(dnn, experiences):
-    # terminal_experiences = []
-    # for experience in experiences:
-    #     terminal = experience['terminal']
-    #     score = experience['score']
-    #     if terminal and score == 0:
-    #         terminal_experiences.append(experience)
-    #
-    # training_experiences = []
-    #
-    # indices = np.random.choice(len(experiences), 100)
-    # for experience in np.take(experiences, indices, axis=0):
-    #     training_experiences.append(experience)
-    #
-    # if len(terminal_experiences) > 0:
-    #     indices = np.random.choice(len(terminal_experiences), 100)
-    #     for experience in np.take(terminal_experiences, indices, axis=0):
-    #         training_experiences.append(experience)
-
     X = np.array([], dtype=np.float).reshape(0, game.state_size)
     Y = np.array([], dtype=np.float).reshape(0, game.action_size)
 
@@ -135,24 +117,19 @@ for i in range(10000000):
         games += 1
         game = Game()
 
+        if randint(0, 2) == 0:
+            game.move(randint(0, 8), -1)
+
         # add old experiences
 
-        # p = np.random.exponential(size=len(experiences))
-        # p = p / p.sum()
-        # indices = np.random.choice(len(experiences), 5000, p=p)
-        # experiences = np.take(experiences, indices, axis=0).tolist()
-
-        # if len(old_experiences) >= 0:
-        #     random_old_experiences = np.random.choice(old_experiences, len(experiences) * 2).tolist()
-        #     experiences = experiences + random_old_experiences
+        if len(old_experiences) >= 0:
+            random_old_experiences = np.random.choice(old_experiences, len(experiences) * 4).tolist()
+            experiences = experiences + random_old_experiences
 
         # train
         new_loss = train(dnn1, experiences)
-        old_loss = train(dnn1, old_experiences)
 
         print('games ', games)
-        print('new_loss ', new_loss)
-        print('old_loss ', old_loss)
 
         experiences = []
 

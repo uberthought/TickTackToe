@@ -62,6 +62,9 @@ for i in range(2000):
 
         game = Game()
 
+        if randint(0, 2) == 0:
+            game.move(randint(0, 8), -1)
+
 print('Won: ', wins / games * 100)
 print('Lost: ', lost / games * 100)
 print('Tied: ', ties / games * 100)
