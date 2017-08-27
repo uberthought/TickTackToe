@@ -34,7 +34,7 @@ class Game:
         all = np.concatenate((rows, columns, [diagonal1], [diagonal2]))
 
         if all.max() == 3:
-            return 0
+            return 100
         elif all.min() == -3:
             return 0
 

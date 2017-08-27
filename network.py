@@ -19,10 +19,10 @@ class DNN:
 
         self.input_layer = tf.placeholder(tf.float32, shape=(None, state_size))
 
-        self.hidden1 = tf.layers.dense(inputs=self.input_layer, units=state_size * 2, activation=tf.nn.tanh)
+        self.hidden1 = tf.layers.dense(inputs=self.input_layer, units=state_size, activation=tf.nn.tanh)
         self.dropout1 = tf.nn.dropout(self.hidden1, self.keep_prob)
 
-        self.hidden2 = tf.layers.dense(inputs=self.dropout1, units=state_size * 2, activation=tf.nn.tanh)
+        self.hidden2 = tf.layers.dense(inputs=self.dropout1, units=state_size, activation=tf.nn.tanh)
         self.dropout2 = tf.nn.dropout(self.hidden2, self.keep_prob)
 
         self.prediction = tf.layers.dense(inputs=self.dropout2, units=action_size)
@@ -47,7 +47,7 @@ class DNN:
         # loss = self.sess.run(self.train_loss, feed_dict=feed_dict)
         loss = 1000
         i = 0
-        while i < 20000 and loss > 10:
+        while i < 20000 and loss > 25:
         # while i < 100:
             i += 1
             loss, _ = self.sess.run([self.train_loss, self.train_step], feed_dict=feed_dict)
