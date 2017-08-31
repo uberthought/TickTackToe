@@ -33,7 +33,10 @@ class MyServer(BaseHTTPRequestHandler):
         logging.debug('ARGS %d' % (len(postvars)))
 
         if b'Test' in postvars:
-            self.test_button()
+            print(postvars)
+            games = int(postvars[b'Games'][0].decode('UTF-8'))
+            print(games)
+            self.test_button(games)
         else:
             self.show_root()
 
@@ -48,6 +51,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes("<body><p>This is a test.</p>", "utf-8"))
 
         self.wfile.write(bytes("<form action = \"\" method = \"post\">", "utf-8"))
+        self.wfile.write(bytes("<input type=\"number\" name=\"Games\" min=\"1\" max=\"10000\" value=\"2000\" />", "utf-8"))
         self.wfile.write(bytes("<input type=\"submit\" name=\"Test\" value=\"Test\" />", "utf-8"))
         self.wfile.write(bytes("</form>", "utf-8"))
 
@@ -56,12 +60,12 @@ class MyServer(BaseHTTPRequestHandler):
         self.wfile.write(bytes("</body></html>", "utf-8"))
 
 
-    def test_button(self):
+    def test_button(self, games):
 
         logging.debug('test_button()')
 
         test = Test()
-        test_result = test.run()
+        test_result = test.run(games)
 
         self.show_root(test_result)
 

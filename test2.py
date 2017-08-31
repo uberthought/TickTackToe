@@ -27,14 +27,14 @@ class Test:
         self.game = Game()
         self.dnn = DNN()
 
-    def run(self):
+    def run(self, total):
         games = 0
         illegal = 0
         ties = 0
         wins = 0
         lost = 0
 
-        for i in range(2000):
+        while games < total:
             player_turn(self, 1)
 
             if not self.game.is_finished():
@@ -56,7 +56,8 @@ class Test:
                 if randint(0, 2) == 0:
                     self.game.move(randint(0, 8), -1)
 
-        result = 'Won ' + str(wins / games * 100) + '<br>'
+        result = 'Games Played ' + str(games) + '<br>'
+        result += 'Won ' + str(wins / games * 100) + '<br>'
         result += 'Lost ' + str(lost / games * 100) + '<br>'
         result += 'Tied ' + str(ties / games * 100) + '<br>'
         result += 'Illegal ' + str(illegal / games * 100) + '<br>'
