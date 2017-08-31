@@ -4,10 +4,12 @@ import math
 
 
 class Game:
+
+    state_size = 18
+    action_size = 9
+
     def __init__(self):
         self.illegal_move = None
-        self.state_size = 18
-        self.action_size = 9
         self.state = np.zeros(9)
 
     def get_state(self):

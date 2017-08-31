@@ -13,51 +13,53 @@ def lrelu(x):
 
 
 class DNN:
-    def __init__(self, state_size, action_size):
 
-        self.keep_prob = tf.placeholder_with_default(1.0, [])
+    keep_prob = tf.placeholder_with_default(1.0, [])
 
-        self.input_layer = tf.placeholder(tf.float32, shape=(None, state_size))
+    input_layer = tf.placeholder(tf.float32, shape=(None, Game.state_size))
 
-        self.hidden1 = tf.layers.dense(inputs=self.input_layer, units=state_size, activation=tf.nn.tanh)
-        self.dropout1 = tf.nn.dropout(self.hidden1, self.keep_prob)
+    hidden1 = tf.layers.dense(inputs=input_layer, units=Game.state_size, activation=tf.nn.tanh)
+    dropout1 = tf.nn.dropout(hidden1, keep_prob)
 
-        self.hidden2 = tf.layers.dense(inputs=self.dropout1, units=state_size, activation=tf.nn.tanh)
-        self.dropout2 = tf.nn.dropout(self.hidden2, self.keep_prob)
+    hidden2 = tf.layers.dense(inputs=dropout1, units=Game.state_size, activation=tf.nn.tanh)
+    dropout2 = tf.nn.dropout(hidden2, keep_prob)
 
-        self.prediction = tf.layers.dense(inputs=self.dropout2, units=action_size)
+    prediction = tf.layers.dense(inputs=dropout2, units=Game.action_size)
 
-        self.expected = tf.placeholder(tf.float32, shape=(None, action_size))
+    expected = tf.placeholder(tf.float32, shape=(None, Game.action_size))
 
-        self.train_loss = tf.reduce_mean(tf.losses.mean_squared_error(self.expected, self.prediction))
-        self.train_step = tf.train.AdagradOptimizer(.2).minimize(self.train_loss)
+    train_loss = tf.reduce_mean(tf.losses.mean_squared_error(expected, prediction))
+    train_step = tf.train.AdagradOptimizer(.2).minimize(train_loss)
 
-        self.sess = tf.Session()
-        init = tf.global_variables_initializer()
-        self.sess.run(init)
+    sess = tf.Session()
+    init = tf.global_variables_initializer()
+    sess.run(init)
+    saver = tf.train.Saver()
 
-        self.saver = tf.train.Saver()
-        self.path = 'train/train.ckpt'
-        if os.path.exists(self.path + '.meta'):
-            print('loading from ' + self.path)
-            self.saver.restore(self.sess, self.path)
+    path = 'train/train.ckpt'
+
+    def __init__(self):
+
+        if os.path.exists(DNN.path + '.meta'):
+            print('loading from ' + DNN.path)
+            DNN.saver.restore(DNN.sess, DNN.path)
 
     def train(self, X, Y):
-        feed_dict = {self.input_layer: X, self.expected: Y, self.keep_prob: .8}
-        # loss = self.sess.run(self.train_loss, feed_dict=feed_dict)
+        feed_dict = {input_layer: X, expected: Y, keep_prob: .8}
+        # loss = DNN.sess.run(train_loss, feed_dict=feed_dict)
         loss = 1000
         i = 0
         while i < 20000 and loss > 25:
         # while i < 100:
             i += 1
-            loss, _ = self.sess.run([self.train_loss, self.train_step], feed_dict=feed_dict)
+            loss, _ = DNN.sess.run([train_loss, train_step], feed_dict=feed_dict)
             if i != 0 and i % 2000 == 0:
                 print('loss ', loss)
 
         return loss
 
     def run(self, X):
-        return self.sess.run(self.prediction, feed_dict={self.input_layer: X})
+        return DNN.sess.run(DNN.prediction, feed_dict={DNN.input_layer: X})
 
     def save(self):
-        self.saver.save(self.sess, self.path)
+        DNN.saver.save(DNN.sess, DNN.path)
