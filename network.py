@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 import os.path
 import math
+import logging
 
 from Game import Game
 from random import randint
@@ -41,20 +42,20 @@ class DNN:
     def __init__(self):
 
         if os.path.exists(DNN.path + '.meta'):
-            print('loading from ' + DNN.path)
+            logging.info('loading from ' + DNN.path)
             DNN.saver.restore(DNN.sess, DNN.path)
 
     def train(self, X, Y):
-        feed_dict = {input_layer: X, expected: Y, keep_prob: .8}
+        feed_dict = {DNN.input_layer: X, DNN.expected: Y, DNN.keep_prob: .8}
         # loss = DNN.sess.run(train_loss, feed_dict=feed_dict)
         loss = 1000
         i = 0
         while i < 20000 and loss > 25:
         # while i < 100:
             i += 1
-            loss, _ = DNN.sess.run([train_loss, train_step], feed_dict=feed_dict)
+            loss, _ = DNN.sess.run([DNN.train_loss, DNN.train_step], feed_dict=feed_dict)
             if i != 0 and i % 2000 == 0:
-                print('loss ', loss)
+                logging.debug('loss ', loss)
 
         return loss
 

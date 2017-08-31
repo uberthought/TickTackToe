@@ -56,8 +56,8 @@ class Test:
                 if randint(0, 2) == 0:
                     self.game.move(randint(0, 8), -1)
 
-        result = 'Won ' + str(wins / games * 100)
+        result = 'Won ' + str(wins / games * 100) + '<br>'
+        result += 'Lost ' + str(lost / games * 100) + '<br>'
+        result += 'Tied ' + str(ties / games * 100) + '<br>'
+        result += 'Illegal ' + str(illegal / games * 100) + '<br>'
         return result
-
-#foo = Test()
-#print(foo.run())

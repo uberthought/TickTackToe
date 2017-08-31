@@ -9,7 +9,7 @@ from network import DNN
 from random import randint
 
 game = Game()
-dnn1 = DNN(game.state_size, game.action_size)
+dnn1 = DNN()
 
 experiences = []
 old_experiences = []
