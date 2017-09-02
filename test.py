@@ -8,7 +8,7 @@ from network import DNN
 from random import randint
 
 game = Game()
-dnn1 = DNN(game.state_size, game.action_size)
+dnn = DNN()
 
 wins = 0
 ties = 0
@@ -39,7 +39,7 @@ for i in range(2000):
     # print(np.reshape(game.state, (3, 3)))
 
     # player 1 moves
-    player_turn(dnn1, 1)
+    player_turn(dnn, 1)
 
     # print(np.reshape(game.state, (3, 3)))
 
